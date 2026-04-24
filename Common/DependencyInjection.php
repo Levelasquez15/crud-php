@@ -72,7 +72,8 @@ class DependencyInjection {
     public static function getAuthController(): AuthController {
         return new AuthController(
             self::getLoginUseCase(),
-            self::getVerifyEmailUseCase()
+            self::getVerifyEmailUseCase(),
+            self::getMailer()
         );
     }
     

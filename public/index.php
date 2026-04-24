@@ -8,7 +8,6 @@
         $publicBase = '';
     }
     
-    // Si la petición es directo al workspace y no contiene el auth o index
     if ($requestPath !== $publicBase && !str_starts_with($requestPath, $publicBase . '/')) {
         session_start();
         $dest = isset($_SESSION['auth']['id']) ? 'home' : 'auth.login';
@@ -26,8 +25,8 @@ Flash::start();
 $route  = $_GET['route'] ?? 'home';
 $routes = WebRoutes::getRoutes();
 
-// Security / Auth check
-$publicRoutes = ['home', 'auth.login', 'auth.authenticate', 'users.create', 'users.store', 'auth.logout', 'auth.forgot', 'auth.forgot.send', 'auth.verify'];
+// CAMBIO 1 — se agregó 'auth.reset' y 'auth.reset.save'
+$publicRoutes = ['home', 'auth.login', 'auth.authenticate', 'users.create', 'users.store', 'auth.logout', 'auth.forgot', 'auth.forgot.send', 'auth.reset', 'auth.reset.save', 'auth.verify'];
 if (!in_array($route, $publicRoutes)) {
     if (!isset($_SESSION['auth']['id'])) {
         View::redirect('auth.login');
@@ -38,7 +37,6 @@ if (!in_array($route, $publicRoutes)) {
 try {
     $routeConfig = $routes[$route] ?? null;
     if (!$routeConfig) {
-        // Simple 404
         header("HTTP/1.0 404 Not Found");
         echo "404 Not Found";
         exit;
@@ -50,14 +48,12 @@ try {
         exit;
     }
 
-    // DI
     $controllerName = $routeConfig['controller'];
     $action = $routeConfig['action'];
     $methodName = "get{$controllerName}";
 
     $controller = DependencyInjection::$methodName();
 
-    // Dispatch
     switch ($route) {
         case 'home':
             $controller->index();
@@ -91,7 +87,6 @@ try {
             break;
             
         case 'users.store':
-            // Generate UUID
             $id = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
                 mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff),
                 mt_rand(0, 0x0fff) | 0x4000, mt_rand(0, 0x3fff) | 0x8000,
@@ -199,9 +194,27 @@ try {
         case 'auth.forgot.send':
             $email = trim($_POST['email'] ?? '');
             $controller->processForgotPassword($email);
-            // Enumeration attack defense: always say it was successful.
             Flash::setSuccess('Si el correo existe en nuestra plataforma, hemos enviado un enlace de recuperación de contraseña.');
             View::redirect('auth.forgot');
+            break;
+
+        // CAMBIO 2 — casos nuevos de reset
+        case 'auth.reset':
+            $controller->showResetPassword();
+            View::render('auth/reset-password', [
+                'pageTitle' => 'Nueva Contraseña',
+                'token'     => $_GET['token'] ?? '',
+                'message'   => Flash::message(),
+            ]);
+            break;
+
+        case 'auth.reset.save':
+            $controller->processResetPassword(
+                $_POST['token']    ?? '',
+                $_POST['password'] ?? ''
+            );
+            Flash::setSuccess('Contraseña actualizada. Ya puedes iniciar sesión.');
+            View::redirect('auth.login');
             break;
 
         case 'auth.verify':
@@ -234,6 +247,10 @@ try {
         case 'auth.authenticate':
             Flash::setOld(['email' => $_POST['email'] ?? '']);
             View::redirect('auth.login');
+            break;
+        // CAMBIO 3 — manejo de error en reset
+        case 'auth.reset.save':
+            View::redirect('auth.reset', ['token' => $_POST['token'] ?? '']);
             break;
         case 'users.index':
             View::redirect('home');

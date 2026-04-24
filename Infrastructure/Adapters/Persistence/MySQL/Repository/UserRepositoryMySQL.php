@@ -42,6 +42,37 @@ class UserRepositoryMySQL implements
         return $savedUser;
     }
 
+    public function savePasswordResetToken(string $email, string $token): void {
+        $sql  = "UPDATE users 
+                 SET password_reset_token = :token, 
+                     password_reset_expires_at = DATE_ADD(NOW(), INTERVAL 1 HOUR)
+                 WHERE email = :email";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':token' => $token, ':email' => $email]);
+    }
+
+    public function findByPasswordResetToken(string $token): ?array {
+        $sql  = "SELECT * FROM users 
+                 WHERE password_reset_token = :token 
+                   AND password_reset_expires_at > NOW() 
+                 LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':token' => $token]);
+        $row  = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    public function updatePasswordAndClearToken(string $id, string $hashedPassword): void {
+        $sql  = "UPDATE users 
+                 SET password = :password, 
+                     password_reset_token = NULL, 
+                     password_reset_expires_at = NULL,
+                     updated_at = NOW()
+                 WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':password' => $hashedPassword, ':id' => $id]);
+    }
+
     public function update(UserModel $user): UserModel {
         $dto = $this->mapper->fromModelToDto($user);
         $sql = "UPDATE users 

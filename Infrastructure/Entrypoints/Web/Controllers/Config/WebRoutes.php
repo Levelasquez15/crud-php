@@ -20,6 +20,8 @@ class WebRoutes {
             
             'auth.forgot'       => ['method' => 'GET',  'controller' => 'AuthController', 'action' => 'showForgotPassword'],
             'auth.forgot.send'  => ['method' => 'POST', 'controller' => 'AuthController', 'action' => 'processForgotPassword'],
+            'auth.reset'        => ['method' => 'GET',  'controller' => 'AuthController', 'action' => 'showResetPassword'],
+            'auth.reset.save'   => ['method' => 'POST', 'controller' => 'AuthController', 'action' => 'processResetPassword'],
             
             'auth.verify'       => ['method' => 'GET',  'controller' => 'AuthController', 'action' => 'verifyEmail'],
         ];

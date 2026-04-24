@@ -50,12 +50,13 @@ class AuthController {
         $repo->savePasswordResetToken($email, $token);
 
         $scheme   = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $baseUrl  = $scheme . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['SCRIPT_NAME']);
-        $resetUrl = rtrim($baseUrl, '/') . '/index.php?route=auth.reset&token=' . urlencode($token);
+        $basePath = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+        $resetUrl = $scheme . '://' . $_SERVER['HTTP_HOST'] . rtrim($basePath, '/') . '/index.php?route=auth.reset&token=' . $token;
 
         $userName = $user->name()->value();
         ob_start();
-        include __DIR__ . '/../../../../../Presentation/Views/emails/forgot-password.php';
+        $projectRoot = dirname(__DIR__, 4);
+        include $projectRoot . '/Presentation/Views/emails/forgot-password.php';
         $htmlBody = ob_get_clean();
 
         $this->mailer->send($email, 'Recuperación de Contraseña - CRUD Hexagonal', $htmlBody);

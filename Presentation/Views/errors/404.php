@@ -1,6 +1,6 @@
 <div class="text-center py-5">
-    <h1 class="display-1 text-danger">404</h1>
-    <h2>Página No Encontrada</h2>
-    <p class="text-muted">Lo sentimos, la página que buscas no existe.</p>
-    <a href="?route=home" class="btn btn-primary mt-3">Volver al Inicio</a>
+    <h1 class="display-1 fw-bold text-dark">404</h1>
+    <h4 class="text-muted">Pagina no encontrada</h4>
+    <p class="text-muted mt-2">La pagina que buscas no existe o fue movida.</p>
+    <a href="?route=home" class="btn btn-dark mt-3">Volver al inicio</a>
 </div>
